@@ -5,16 +5,25 @@ import { useState } from "react";
 
 const LoginForm = () => {
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const form = e.target;
-    const username = form.username.value;
-    const password = form.password.value;
+    setError("");
+    setLoading(true);
 
-    // Call NextAuth credentials provider
+    const form = e.target;
+    const username = form.username.value.trim();
+    const password = form.password.value.trim();
+
+    if (!username || !password) {
+      setError("Both fields are required.");
+      setLoading(false);
+      return;
+    }
+
     const result = await signIn("credentials", {
-      redirect: false, // 🚀 prevent default redirect
+      redirect: false,
       username,
       password,
     });
@@ -22,40 +31,57 @@ const LoginForm = () => {
     if (result.error) {
       setError("Invalid credentials");
     } else {
-      // optional: redirect manually after login success
-      window.location.href = "/dashboard";
+      window.location.href = "/products";
     }
+    setLoading(false);
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <label htmlFor="username" className="block">
-        Username
-      </label>
-      <input
-        className="block p-1 text-black border rounded"
-        type="text"
-        name="username"
-        id="username"
-        placeholder="Enter username"
-      />
-      <label htmlFor="password" className="block">
-        Password
-      </label>
-      <input
-        className="block p-1 text-black border rounded"
-        type="password"
-        name="password"
-        id="password"
-        placeholder="Password"
-      />
+    <div className="max-w-md mx-auto p-6 space-y-4">
+      <h2 className="text-xl font-semibold text-gray-700 text-center">
+        Login to Your Account
+      </h2>
 
-      {error && <p className="text-red-500">{error}</p>}
+      {error && (
+        <p className="text-red-600 text-center text-sm font-medium">{error}</p>
+      )}
 
-      <button type="submit" className="outline rounded-md p-2">
-        Login
-      </button>
-    </form>
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div className="flex flex-col">
+          <label htmlFor="username" className="text-gray-600 font-medium mb-1">
+            Username
+          </label>
+          <input
+            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-black"
+            type="text"
+            name="username"
+            id="username"
+            placeholder="Enter username"
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="password" className="text-gray-600 font-medium mb-1">
+            Password
+          </label>
+          <input
+            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-black"
+            type="password"
+            name="password"
+            id="password"
+            placeholder="Enter password"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-orange-600 text-white rounded-lg py-2 hover:bg-orange-500 transition disabled:opacity-50"
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
+    </div>
   );
 };
 
