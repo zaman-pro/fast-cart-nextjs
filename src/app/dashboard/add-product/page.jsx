@@ -33,7 +33,7 @@ const AddProduct = () => {
         description,
         category,
         price: Number(price),
-        image: file ? file.name : null, // এখন শুধু filename রাখলাম
+        image: file ? file.name : null,
       };
 
       const result = await addProduct(productData);
