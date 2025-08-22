@@ -7,7 +7,6 @@ const AppContext = createContext();
 export const useAppContext = () => useContext(AppContext);
 
 export const AppContextProvider = ({ children }) => {
-  // Products
   const [products, setProducts] = useState([]);
 
   // Fetch products
