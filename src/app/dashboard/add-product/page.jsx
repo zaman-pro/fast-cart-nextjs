@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { SlCloudUpload } from "react-icons/sl";
+import { useRouter } from "next/navigation";
+import addProduct from "@/app/actions/products/addProduct";
 
 const AddProduct = () => {
   const [file, setFile] = useState(null);
@@ -9,28 +11,47 @@ const AddProduct = () => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Earphone");
   const [price, setPrice] = useState("");
-  const [dragActive, setDragActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  };
+    setError("");
+    setSuccess("");
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
+    if (!name || !description || !price) {
+      setError("All fields are required");
+      return;
     }
-  };
 
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+    setLoading(true);
+    try {
+      const productData = {
+        name,
+        description,
+        category,
+        price: Number(price),
+        image: file ? file.name : null, // এখন শুধু filename রাখলাম
+      };
+
+      const result = await addProduct(productData);
+
+      setSuccess("Product added successfully!");
+      setName("");
+      setDescription("");
+      setCategory("Earphone");
+      setPrice("");
+      setFile(null);
+
+      // redirect
+      setTimeout(() => router.push("/products"), 1000);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to add product");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,14 +66,8 @@ const AddProduct = () => {
           <p className="text-base font-medium">Product Image</p>
           <div
             className={`mt-2 w-40 h-40 flex items-center justify-center border-2 border-dashed rounded cursor-pointer transition ${
-              dragActive
-                ? "border-orange-500 bg-orange-600/10"
-                : "border-gray-400"
+              file ? "border-orange-500" : "border-gray-400"
             }`}
-            onDragEnter={handleDrag}
-            onDragOver={handleDrag}
-            onDragLeave={handleDrag}
-            onDrop={handleDrop}
           >
             <label
               htmlFor="imageUpload"
@@ -82,15 +97,15 @@ const AddProduct = () => {
 
         {/* Right: Form Fields */}
         <div className="space-y-5 w-full">
+          {error && <p className="text-red-600">{error}</p>}
+          {success && <p className="text-green-600">{success}</p>}
+
           <div className="flex flex-col gap-1">
-            <label className="text-base font-medium" htmlFor="product-name">
-              Product Name
-            </label>
+            <label className="text-base font-medium">Product Name</label>
             <input
-              id="product-name"
               type="text"
               placeholder="Type here"
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
+              className="outline-none py-2 px-3 rounded border border-gray-500/40"
               onChange={(e) => setName(e.target.value)}
               value={name}
               required
@@ -98,16 +113,10 @@ const AddProduct = () => {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label
-              className="text-base font-medium"
-              htmlFor="product-description"
-            >
-              Product Description
-            </label>
+            <label className="text-base font-medium">Product Description</label>
             <textarea
-              id="product-description"
               rows={4}
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 resize-none"
+              className="outline-none py-2 px-3 rounded border border-gray-500/40 resize-none"
               placeholder="Type here"
               onChange={(e) => setDescription(e.target.value)}
               value={description}
@@ -117,12 +126,9 @@ const AddProduct = () => {
 
           <div className="flex gap-5 flex-wrap">
             <div className="flex flex-col gap-1 w-32">
-              <label className="text-base font-medium" htmlFor="category">
-                Category
-              </label>
+              <label className="text-base font-medium">Category</label>
               <select
-                id="category"
-                className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 h-[42px]"
+                className="outline-none py-2 px-3 rounded border border-gray-500/40 h-[42px]"
                 onChange={(e) => setCategory(e.target.value)}
                 value={category}
               >
@@ -136,14 +142,11 @@ const AddProduct = () => {
               </select>
             </div>
             <div className="flex flex-col gap-1 w-32">
-              <label className="text-base font-medium" htmlFor="product-price">
-                Product Price
-              </label>
+              <label className="text-base font-medium">Product Price</label>
               <input
-                id="product-price"
                 type="number"
                 placeholder="0"
-                className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 h-[42px]"
+                className="outline-none py-2 px-3 rounded border border-gray-500/40 h-[42px]"
                 onChange={(e) => setPrice(e.target.value)}
                 value={price}
                 required
@@ -153,9 +156,10 @@ const AddProduct = () => {
 
           <button
             type="submit"
-            className="px-8 py-2.5 bg-orange-600 text-white font-medium rounded"
+            disabled={loading}
+            className="px-8 py-2.5 bg-orange-600 text-white font-medium rounded disabled:opacity-50"
           >
-            ADD
+            {loading ? "Adding..." : "ADD"}
           </button>
         </div>
       </form>
